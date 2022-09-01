@@ -29,6 +29,8 @@ pending_nodes = set()
 
 nodes = set()
 
+transactions = set()
+
 iocModel = MockIOCModel()
 
 isAttachedToNodes = False;
@@ -100,18 +102,22 @@ async def getAddressAsString():
 async def attach():
     '''
     Attach this node to remote blockchain node
-    To call this function type: http://<node_host>:<node_port>/attach?remote_node_url='<remote_address>'
+    Request example: http://<node_host>:<node_port>/attach?remote_node_url='<remote_address>'
     Example: http://127.0.0.1:5000/attach?remote_node_url='http://127.0.0.1:5001'
+    Steo 0. Verify that this node is not attacher
     Step 1. Check if remote node is live 
     Step 2. If remote node is live, than add to set nodes
-    Step 3. Call on remote node method addPeer
-    Step 4. The responce from remote nodes will be the nodes in blockchain network. Add This networks
+    Step 3. Call on remote node method broadcastNewPeer
+    Step 4. The responce from remote node will be the nodes in blockchain network. Add this remote nodes
+    Step 5. 
     '''
+    
+    # Step 0
     global isAttachedToNodes
     if isAttachedToNodes: # check that node attached to nodes
         return {'error':'attached'}
     
-    
+    # Step 1
     remote_node_url = request.args.get('remote_node_url')   #getting the remote_node_url from request
     #print(remote_node_url)
     try:
@@ -119,9 +125,10 @@ async def attach():
             healthcheck_responce = await client.get(f'{remote_node_url}/healthcheck')   #send request to remote node to healthcheck
     except httpx.ConnectError:
         return {'error':'remote server is not live'}
-    
+    # Step 2
     nodes.add(remote_node_url)  #add remote node to set of nodes
     
+    # Step 3
     local_node_socket = request.server #get socket of local node
     local_node_host = local_node_socket[0]   #retrieve the host from local_node_socket
     local_node_port = local_node_socket[1]   #retrieve the port from local_node_socket
@@ -136,7 +143,7 @@ async def attach():
         return {'error':'failed to attach to network'}
     print(f'AddPeerResponce: {addPeerResponse.text}')
 
-    # add networks
+    # Step 4.
     responce_nodes = json.loads(addPeerResponse.text) #list of response nodes
     # print(type(responce_nodes))
     # print(responce_nodes)
@@ -159,6 +166,7 @@ async def attach():
 async def broadcastNewPeer():
     '''
     Broadcasting peer to blockchain network. 
+    Request example: http://<node_host>:<node_port>/broadcastNewPeer?peer=http://<peer_node_host>:<peer_node_port>
     Step 1. Check if remote node is live
     Step 2. Add peer to nodes
     Step 3. Call on nodes method addPeer()
@@ -312,6 +320,21 @@ async def getBlockchainLength():
     '''
     blockchainLength = blockchain.getBlockchainLength()
     return {'blockchainLength' : blockchainLength}
+
+###################################################################
+############### TRANSACTION FUNCTIONALITY ###############
+
+@app.route("/transact", methods=["POST"])
+async def transact():
+    '''
+    Request example: http://<node_host>:<node_port>/transact
+    with body that contains transaction
+    '''
+    pass
+
+@app.route("/appendTransaction", methods=["POST"])
+async def appendTransaction():
+    pass
 
 
 ###################################################################

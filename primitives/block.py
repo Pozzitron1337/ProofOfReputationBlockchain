@@ -35,8 +35,6 @@ class Block:
         self.transactions.append(transaction)
 
     def getHash(self):
-        s = self.__repr__()
-        #print(s.encode())
-        hexdigest = hashlib.new("sha3_512", s.encode())
-        #print(hexdigest.hexdigest())
-        return hexdigest.hexdigest()
+        blockInfo = self.toJSON().encode()
+        blockHash = hashlib.sha3_256(blockInfo)
+        return blockHash.hexdigest()
